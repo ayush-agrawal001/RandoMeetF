@@ -52,7 +52,7 @@ function Room(){
         setCallInput(callDoc.id)
         
         peer.onicecandidate = async (ev) => {
-            ev.candidate && await addDoc(offerCandidates ,ev.candidate.toJSON());
+            await ev.candidate && await addDoc(offerCandidates ,ev.candidate.toJSON());
             console.log("added candidate");
         }
 
@@ -67,18 +67,18 @@ function Room(){
         await setDoc(callDoc, { offer })
 
         onSnapshot(callDoc , (snapshot) => {
-            const data = snapshot.data() ;
-            // console.log("Snap shot data", data);
-            if (!peer.currentRemoteDescription && data?.answer){
-                const answerDescription = new RTCPeerConnection(data.answer)
-                peer.onicecandidate(answerDescription)
+            const data = snapshot.data();
+            if (!peer.currentRemoteDescription && data?.answer) {
+              const answerDescription = new RTCSessionDescription(data.answer);
+              peer.setRemoteDescription(answerDescription);
             }
         })
 
         onSnapshot( answerCandidates ,(snapshot) => {
             snapshot.docChanges().forEach((change) => {
-                if (change.type === "added"){
-                    setRemoteIceCandidate(change)
+                if (change.type === 'added') {
+                  const candidate = new RTCIceCandidate(change.doc.data());
+                  peer.addIceCandidate(candidate);
                 }
             })
         })
